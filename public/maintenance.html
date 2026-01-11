@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFD – Maintenance</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <header>
+    <h1>DFD – Maintenance Groups</h1>
+    <nav>
+      <button id="btn-admin">Back to Administration</button>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="maintenance-groups">
+      <h2>Maintenance Groups</h2>
+      <div class="groups-grid">
+        <a href="maintenance_small_engine.html" class="group-card">
+          <h3>Small Engine Repair</h3>
+          <p>Saws, small generators</p>
+        </a>
+        
+        <a href="maintenance_gas_monitor.html" class="group-card">
+          <h3>Gas Monitor Repair</h3>
+          <p>4-gas monitor, CO2 monitor, H2S monitor, reserve monitors</p>
+        </a>
+        
+        <a href="maintenance_scba.html" class="group-card">
+          <h3>SCBA Repair</h3>
+          <p>SCBA bottles, SCBA air packs, reserve SCBA air packs, training SCBA air packs</p>
+        </a>
+        
+        <a href="maintenance_dive_scba.html" class="group-card">
+          <h3>Dive SCBA Repair</h3>
+          <p>Dive SCBA equipment maintenance</p>
+        </a>
+        
+        <a href="maintenance_garage.html" class="group-card">
+          <h3>City Garage (Repairs)</h3>
+          <p>Apparatus repairs</p>
+        </a>
+        
+        <a href="scuba.html" class="group-card">
+          <h3>SCUBA Equipment</h3>
+          <p>Underwater breathing apparatus</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById('btn-admin').addEventListener('click', () => {
+      window.location.href = 'administration.html';
+    });
+  </script>
+</body>
+</html>
