@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFD System – Administration</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#c41212">
+</head>
+<body>
+  <header>
+    <h1>DFD System – Administration</h1>
+    <nav>
+      <button id="btn-search">Search & Print</button>
+      <button id="btn-inventory">Inventory</button>
+      <button id="btn-maintenance">Maintenance</button>
+      <button id="btn-configuration">Configuration</button>
+    </nav>
+  </header>
+  <main id="content">
+    <div class="dashboard">
+      <h2>Welcome to DFD System</h2>
+      <p>Select an action from the navigation bar above.</p>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>Active Issues</h3>
+          <p id="active-issues-count">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Overdue Checks</h3>
+          <p id="overdue-checks-count">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Expiring Medications</h3>
+          <p id="expiring-meds-count">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('btn-search').addEventListener('click', () => {
+      window.location.href = 'search.html';
+    });
+    
+    document.getElementById('btn-inventory').addEventListener('click', () => {
+      window.location.href = 'inventory.html';
+    });
+    
+    document.getElementById('btn-maintenance').addEventListener('click', () => {
+      window.location.href = 'maintenance.html';
+    });
+    
+    document.getElementById('btn-configuration').addEventListener('click', () => {
+      window.location.href = 'configuration.html';
+    });
+  </script>
+</body>
+</html>
