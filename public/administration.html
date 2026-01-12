@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DFD System — Administration</title>
+  <style>
+    :root{
+      --brand:#c41212;
+      --brand-ink:#fff;
+      --ink:#111;
+      --muted:#666;
+      --bg:#fafafa;
+      --card:#fff;
+      --line:#e6e6e6;
+
+      --ok:#1a7f37;
+      --bad:#c81e1e;
+      --na:#6b7280;
+
+      --hl-new: #ffe1e1;
+      --hl-old: #fff4cc;
+      --hl-ack: #d8ffe0;
+
+      --b-new:#c81e1e;
+      --b-old:#b45309;
+      --b-ack:#1a7f37;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{
+      margin:0; padding:0;
+      background:var(--bg);
+      color:var(--ink);
+      font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+    }
+
+    header{
+      position:sticky; top:0; z-index:10;
+      background:var(--brand);
+      color:var(--brand-ink);
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.15);
+    }
+    .wrap{ max-width:1200px; margin:0 auto; padding:0 14px 60px; }
+    .headRow{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; flex-wrap:wrap;
+    }
+    .title{
+      display:flex; align-items:center; gap:10px;
+    }
+    .badgeBrand{
+      width:34px; height:34px;
+      border-radius:10px;
+      background:rgba(255,255,255,.18);
+      border:1px solid rgba(255,255,255,.28);
+    }
+    h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .subhead{
+      margin:0;
+      opacity:.9;
+      font-size:12px;
+    }
+
+    .toolbar{
+      display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;
+    }
+    .toolbar label{ font-size:12px; opacity:.95; font-weight:700; }
+
+    .toolbar input{
+      height:36px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.25);
+      background:rgba(255,255,255,.14);
+      color:#fff;
+      padding:0 10px;
+      outline:none;
+      min-width:200px;
+    }
+    .toolbar input::placeholder{ color:rgba(255,255,255,.8); }
+
+    .toolbar select{
+      height:36px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.25);
+      background:rgba(255,255,255,.14);
+      color:#fff;
+      padding:0 10px;
+      outline:none;
+      font-weight:900;
+      min-width:160px;
+      appearance:none;
+    }
+    .toolbar select option{ color:#111; }
+
+    .btn{
+      height:36px;
+      padding:0 12px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.12);
+      background:#fff;
+      color:#111;
+      font-weight:800;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    main{ padding-top:14px; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+      .toolbar input{ min-width: 180px; }
+      .toolbar select{ min-width: 160px; }
+    }
+
+    /* Make header controls easier on phones */
+    @media (max-width: 760px){
+      .toolbar{
+        width:100%;
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .toolbar > div{ width:100%; }
+      .toolbar input, .toolbar select, .btn{ width:100%; }
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.04);
+    }
+    .card h2{
+      margin:0 0 8px;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+    .note{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* Status table */
+    table.grid{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:12px;
+      border:1px solid var(--line);
+    }
+    .grid thead th{
+      background:#f3f4f6;
+      text-align:left;
+      padding:10px;
+      font-size:12px;
+      border-bottom:1px solid var(--line);
+    }
+    .grid tbody td{
+      padding:10px;
+      vertical-align:top;
+      border-bottom:1px solid var(--line);
+    }
+    .grid tbody tr:last-child td{ border-bottom:none; }
+    .pill{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:11px;
+      border:1px solid rgba(0,0,0,.08);
+    }
+    .pill.ok{ background:rgba(26,127,55,.12); color:var(--ok); }
+    .pill.bad{ background:rgba(200,30,30,.12); color:var(--bad); }
+    .pill.na{ background:rgba(107,114,128,.12); color:var(--na); }
+    .sub{
+      display:block;
+      margin-top:3px;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    /* Issues highlighting */
+    .hl-new{ background: var(--hl-new); }
+    .hl-old{ background: var(--hl-old); }
+    .hl-ack{ background: var(--hl-ack); }
+
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:800;
+      font-size:12px;
+      user-select:none;
+    }
+    .toggle input{ width:18px; height:18px; }
+
+    /* Unit grouped issues */
+    details.unit-group{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-top:10px;
+    }
+    summary.unit-summary{
+      list-style:none;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--line);
+    }
+    summary.unit-summary::-webkit-details-marker{ display:none; }
+    .unit-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .unit-title{
+      font-weight:900;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .unit-meta{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 8px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:11px;
+      border:1px solid rgba(0,0,0,.10);
+      background:#fff;
+    }
+    .badge.b-new{ color: var(--b-new); }
+    .badge.b-old{ color: var(--b-old); }
+    .badge.b-ack{ color: var(--b-ack); }
+    .unit-count{
+      font-weight:900;
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.10);
+      background:#fff;
+    }
+    .unit-body{ padding:10px; display:grid; gap:10px; }
+
+    /* Toast */
+    #toast{
+      position:fixed;
+      left:50%;
+      bottom:16px;
+      transform:translateX(-50%);
+      background:#111;
+      color:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:900;
+      font-size:13px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      z-index:9999;
+    }
+    #toast.show{ opacity:1; }
+
+    /* Responsive table stack */
+    @media (max-width: 760px){
+      table.grid thead{ display:none; }
+      table.grid, table.grid tbody, table.grid tr, table.grid td{
+        display:block;
+        width:100%;
+      }
+      table.grid tr{
+        border-bottom:1px solid var(--line);
+        padding:10px 0;
+      }
+      table.grid td{
+        border:none;
+        padding:6px 10px;
+      }
+      table.grid td::before{
+        content: attr(data-label);
+        display:block;
+        font-size:11px;
+        color: var(--muted);
+        font-weight:900;
+        margin-bottom:2px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="headRow">
+        <div class="title">
+          <div class="badgeBrand"></div>
+          <div>
+            <h1>DFD System — Administration</h1>
+            <p class="subhead">Status dashboard • Issues</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label for="adminStationFilter">View</label>
+            <select id="adminStationFilter" aria-label="Filter by station">
+              <option value="all">Overall (All Stations)</option>
+              <option value="1">Station 1</option>
+              <option value="2">Station 2</option>
+              <option value="3">Station 3</option>
+              <option value="4">Station 4</option>
+              <option value="5">Station 5</option>
+              <option value="6">Station 6</option>
+              <option value="7">Station 7</option>
+            </select>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label for="adminName">Admin Name (for logging)</label>
+            <input id="adminName" placeholder="Your name (required)" />
+          </div>
+
+          <!-- Search & Print -->
+          <a class="btn" href="./search.html" style="text-decoration:none;display:inline-flex;align-items:center">
+            Search & Print
+          </a>
+
+          <!-- NEW: Configuration -->
+          <a class="btn" href="./configuration.html" style="text-decoration:none;display:inline-flex;align-items:center">
+            Configuration
+          </a>
+
+          <button class="btn" id="btnRefresh">Refresh</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid2">
+      <!-- Status -->
+      <section class="card">
+        <h2>Apparatus Check Status</h2>
+        <div class="note">Green = done in current window • Red = not done • N/A follows apparatus requirement rules</div>
+        <div style="margin-top:10px; overflow:auto">
+          <table class="grid" id="statusTable">
+            <thead>
+              <tr>
+                <th>Station</th>
+                <th>Apparatus</th>
+                <th>Apparatus Daily</th>
+                <th>Medical Daily</th>
+                <th>SCBA Weekly</th>
+                <th>Pump Weekly</th>
+                <th>Aerial Weekly</th>
+                <th>Saws Weekly</th>
+                <th>Batteries Weekly</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="9" class="note">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Removed: Weekly Schedule Configuration card -->
+      <section class="card">
+        <h2>Notes</h2>
+        <div class="note">
+          Configuration (weekly schedules + email recipients) has moved to the Configuration page.
+        </div>
+      </section>
+    </div>
+
+    <!-- Issues -->
+    <section class="card" style="margin-top:12px">
+      <h2 id="issuesTitle">Active Issues</h2>
+      <div class="note">NEW = red • OLD (auto after 96 hours) = yellow • ACK = green highlight. Resolve removes from active views.</div>
+      <div id="issuesBox" style="margin-top:10px"></div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" aria-live="polite" aria-atomic="true">
+    <span id="toastText">Saved</span>
+  </div>
+
+  <!-- Script -->
+  <script src="./administration.js"></script>
+</body>
+</html>
