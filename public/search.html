@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFD – Search & Print</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <header>
+    <h1>DFD – Search & Print</h1>
+    <nav>
+      <button id="btn-admin">Back to Administration</button>
+      <button id="btn-print">Print</button>
+      <button id="btn-export-csv">Export CSV</button>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="search-section">
+      <h2>Search Records</h2>
+      
+      <div class="search-filters">
+        <div class="filter-group">
+          <label for="category">Category:</label>
+          <select id="category">
+            <option value="all">All Categories</option>
+            <option value="apparatusDaily">Apparatus Daily</option>
+            <option value="medicalDaily">Medical Daily</option>
+            <option value="scbaWeekly">SCBA Weekly</option>
+            <option value="pumpWeekly">Pump Weekly</option>
+            <option value="aerialWeekly">Aerial Weekly</option>
+            <option value="sawWeekly">Saws Weekly</option>
+            <option value="batteriesWeekly">Batteries Weekly</option>
+            <option value="oosUnit">Out of Service Units</option>
+            <option value="oosEquipment">Out of Service Equipment</option>
+            <option value="issues">Issues</option>
+            <option value="medAlerts">Medication Alerts</option>
+            <option value="inventoryMaster">Inventory Master</option>
+            <option value="maintenanceSmallEngine">Maintenance Small Engine</option>
+            <option value="maintenanceGasMonitor">Maintenance Gas Monitor</option>
+            <option value="maintenanceScba">Maintenance SCBA</option>
+            <option value="maintenanceDiveScba">Maintenance Dive SCBA</option>
+            <option value="maintenanceGarage">Maintenance Garage</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="station-id">Station:</label>
+          <select id="station-id">
+            <option value="all">All Stations</option>
+            <option value="1">Station 1</option>
+            <option value="2">Station 2</option>
+            <option value="3">Station 3</option>
+            <option value="4">Station 4</option>
+            <option value="5">Station 5</option>
+            <option value="6">Station 6</option>
+            <option value="7">Station 7</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="apparatus-id">Apparatus:</label>
+          <select id="apparatus-id">
+            <option value="all">All Apparatus</option>
+            <option value="E-1">E-1</option>
+            <option value="E-3">E-3</option>
+            <option value="E-4">E-4</option>
+            <option value="E-5">E-5</option>
+            <option value="E-6">E-6</option>
+            <option value="E-7">E-7</option>
+            <option value="E-8">E-8</option>
+            <option value="E-9">E-9</option>
+            <option value="T-1">T-1</option>
+            <option value="T-2">T-2</option>
+            <option value="T-3">T-3</option>
+            <option value="B-1">B-1</option>
+            <option value="R-1">R-1</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="date-from">From:</label>
+          <input type="date" id="date-from">
+        </div>
+        
+        <div class="filter-group">
+          <label for="date-to">To:</label>
+          <input type="date" id="date-to">
+        </div>
+        
+        <div class="filter-group">
+          <label for="search-query">Search Query:</label>
+          <input type="text" id="search-query" placeholder="Keywords...">
+        </div>
+        
+        <div class="filter-group">
+          <label for="limit">Limit:</label>
+          <select id="limit">
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200" selected>200</option>
+            <option value="500">500</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="search-actions">
+        <button id="btn-search">Search</button>
+        <button id="btn-reset">Reset</button>
+      </div>
+    </section>
+    
+    <section class="results-section">
+      <h2>Search Results</h2>
+      <div class="results-info">
+        <span id="results-count">0 results found</span>
+        <input type="text" id="report-header" placeholder="Report Header">
+      </div>
+      
+      <div class="results-table-container">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Station</th>
+              <th>Apparatus</th>
+              <th>Category</th>
+              <th>Submitter</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <tr>
+              <td colspan="6">No results yet. Enter search criteria and click Search.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/search.js"></script>
+</body>
+</html>

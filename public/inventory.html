@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFD – Inventory Management</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <header>
+    <h1>DFD – Inventory Management</h1>
+    <nav>
+      <button id="btn-admin">Back to Administration</button>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="inventory-section">
+      <h2>Inventory Management</h2>
+      
+      <div class="inventory-tabs">
+        <button class="tab-button active" data-tab="master">Master Inventory</button>
+        <button class="tab-button" data-tab="station">Station Inventory</button>
+        <button class="tab-button" data-tab="unit">Unit Inventory</button>
+        <button class="tab-button" data-tab="trailer">Trailer Inventory</button>
+        <button class="tab-button" data-tab="maintenance">Maintenance Groups</button>
+        <button class="tab-button" data-tab="special">Special Areas</button>
+      </div>
+      
+      <div class="tab-content" id="master-tab">
+        <h3>Master Inventory</h3>
+        <div class="inventory-controls">
+          <button id="add-master-item">Add Item</button>
+          <button id="remove-master-item">Remove Selected</button>
+          <button id="refresh-master">Refresh</button>
+        </div>
+        <div class="inventory-table-container">
+          <table id="master-inventory-table">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Item ID</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Identifier</th>
+                <th>Description</th>
+                <th>Station</th>
+                <th>Unit</th>
+                <th>Slot</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Updated By</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="master-inventory-body">
+              <tr>
+                <td colspan="13">Loading inventory data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="tab-content hidden" id="station-tab">
+        <h3>Station Inventory</h3>
+        <div class="form-group">
+          <label for="station-select">Select Station:</label>
+          <select id="station-select">
+            <option value="1">Station 1</option>
+            <option value="2">Station 2</option>
+            <option value="3">Station 3</option>
+            <option value="4">Station 4</option>
+            <option value="5">Station 5</option>
+            <option value="6">Station 6</option>
+            <option value="7">Station 7</option>
+          </select>
+        </div>
+        <div class="inventory-controls">
+          <button id="add-station-item">Add Item</button>
+          <button id="remove-station-item">Remove Selected</button>
+          <button id="refresh-station">Refresh</button>
+        </div>
+        <div class="inventory-table-container">
+          <table id="station-inventory-table">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Item ID</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Identifier</th>
+                <th>Description</th>
+                <th>Unit</th>
+                <th>Slot</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Updated By</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="station-inventory-body">
+              <tr>
+                <td colspan="12">Select a station to view inventory</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Additional tabs would follow similar structure -->
+    </section>
+  </main>
+
+  <script src="js/inventory.js"></script>
+</body>
+</html>
