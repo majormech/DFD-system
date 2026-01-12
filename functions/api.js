@@ -1,19 +1,16 @@
 /**
  * Cloudflare Pages Function: /api
- * Proxy to Google Apps Script Web App (your real backend).
- *
- * Why:
- * - Your UI calls /api?action=...
- * - Cloudflare Pages is static, so /api must be implemented as a Function.
- * - Your existing api.js is a mock (KV/in-memory) and does not match your GAS actions.
+ * Proxies requests to your Google Apps Script Web App backend.
  *
  * Required env var:
- *   GAS_WEBAPP_URL = "https://script.google.com/macros/s/....../exec"
+ *   GAS_WEBAPP_URL = "https://script.google.com/macros/s/...../exec"
  *
  * Optional env var:
  *   GAS_API_KEY = "long-secret"
- *   - We pass it as query param `key` (Apps Script can read e.parameter.key)
- *   - And as header `x-api-key` (harmless; GAS may not read headers reliably)
+ *
+ * Compatibility shims included:
+ * - Search: frontend uses `query`, Apps Script expects `q` (GET + POST)
+ * - POST: if frontend sends action in query string but not in JSON body, we inject body.action
  */
 
 const JSON_HEADERS = {
@@ -29,14 +26,6 @@ function error(message, status = 400, extra = {}) {
   return json({ ok: false, error: message, ...extra }, status);
 }
 
-async function readText(request) {
-  try {
-    return await request.text();
-  } catch {
-    return "";
-  }
-}
-
 function safeParseJson(text) {
   try {
     return JSON.parse(text);
@@ -45,16 +34,29 @@ function safeParseJson(text) {
   }
 }
 
+async function readText(request) {
+  try {
+    return await request.text();
+  } catch {
+    return "";
+  }
+}
+
 function buildGasUrl(env, requestUrl) {
   const inUrl = new URL(requestUrl);
   const outUrl = new URL(env.GAS_WEBAPP_URL);
 
-  // Copy all query params the frontend passed (action, stationId, etc.)
+  // Copy all incoming query params through to GAS
   for (const [k, v] of inUrl.searchParams.entries()) {
     outUrl.searchParams.set(k, v);
   }
 
-  // Optional shared secret (recommended)
+  // ---- Compatibility shim: frontend uses "query", GAS expects "q" ----
+  if (!outUrl.searchParams.has("q") && outUrl.searchParams.has("query")) {
+    outUrl.searchParams.set("q", outUrl.searchParams.get("query") || "");
+  }
+
+  // Optional: pass key as query param (Apps Script can read e.parameter.key)
   if (env.GAS_API_KEY && !outUrl.searchParams.has("key")) {
     outUrl.searchParams.set("key", env.GAS_API_KEY);
   }
@@ -63,16 +65,13 @@ function buildGasUrl(env, requestUrl) {
 }
 
 /**
- * Ensures Apps Script POST router receives body.action.
- * Your GAS routePost uses:
- *   const action = ((body.action||"")+"").toLowerCase();
- *
- * But your frontend might send action via query (/api?action=setweeklyday) OR in JSON body.
- * We normalize so GAS always gets body.action.
+ * Your GAS routePost reads body.action, but some frontends send action in query string.
+ * This ensures body.action is always present for POST.
  */
 function normalizePostBodyAction(inUrl, bodyObj) {
   const queryAction = (inUrl.searchParams.get("action") || "").trim();
-  const bodyAction = (bodyObj && typeof bodyObj.action === "string") ? bodyObj.action.trim() : "";
+  const bodyAction =
+    bodyObj && typeof bodyObj.action === "string" ? bodyObj.action.trim() : "";
 
   if (!bodyAction && queryAction) {
     return { ...(bodyObj || {}), action: queryAction };
@@ -84,13 +83,10 @@ export async function onRequest(context) {
   const { request, env } = context;
 
   if (!env.GAS_WEBAPP_URL) {
-    return error(
-      "Missing GAS_WEBAPP_URL environment variable (Apps Script Web App URL).",
-      500
-    );
+    return error("Missing GAS_WEBAPP_URL environment variable.", 500);
   }
 
-  // CORS preflight (safe)
+  // CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -106,18 +102,16 @@ export async function onRequest(context) {
   const inUrl = new URL(request.url);
   const gasUrl = buildGasUrl(env, request.url);
 
-  // Build outgoing headers
   const outHeaders = new Headers();
   outHeaders.set("accept", "application/json");
 
   const contentType = request.headers.get("content-type");
   if (contentType) outHeaders.set("content-type", contentType);
 
-  if (env.GAS_API_KEY) {
-    outHeaders.set("x-api-key", env.GAS_API_KEY);
-  }
+  // Optional key as header too (harmless; GAS usually reads query params more reliably)
+  if (env.GAS_API_KEY) outHeaders.set("x-api-key", env.GAS_API_KEY);
 
-  // Forward GET directly (Apps Script uses e.parameter.action, etc.)
+  // ---- GET: forward directly to Apps Script doGet(e) ----
   if (request.method === "GET") {
     let gasResp;
     try {
@@ -142,33 +136,31 @@ export async function onRequest(context) {
     });
   }
 
-  // Forward POST, ensuring body.action is present for your GAS router
+  // ---- POST: require JSON + forward to Apps Script doPost(e) ----
   if (request.method === "POST") {
     const raw = await readText(request);
-
-    // If the frontend posts JSON, normalize it.
-    // If it posts non-JSON, we’ll forward as-is (but your GAS expects JSON for routePost).
     const bodyObj = safeParseJson(raw);
-    let outBody = raw;
 
-    if (bodyObj) {
-      const normalized = normalizePostBodyAction(inUrl, bodyObj);
+    // Your GAS routePost does JSON.parse(e.postData.contents), so we must send JSON.
+    if (!bodyObj) return error("POST body must be JSON.", 400);
 
-      // Also pass key in body (optional). GAS can validate body.key if you implement it.
-      if (env.GAS_API_KEY && !normalized.key) {
-        normalized.key = env.GAS_API_KEY;
-      }
+    let normalized = normalizePostBodyAction(inUrl, bodyObj);
 
-      outBody = JSON.stringify(normalized);
-      outHeaders.set("content-type", "application/json; charset=utf-8");
-    }
+    // ---- Compatibility shim: frontend might send "query", GAS expects "q" ----
+    if (!normalized.q && normalized.query) normalized.q = normalized.query;
+
+    // Optional key in body too (if you enforce it on GAS side later)
+    if (env.GAS_API_KEY && !normalized.key) normalized.key = env.GAS_API_KEY;
 
     let gasResp;
     try {
       gasResp = await fetch(gasUrl, {
         method: "POST",
-        headers: outHeaders,
-        body: outBody,
+        headers: {
+          ...Object.fromEntries(outHeaders.entries()),
+          "content-type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify(normalized),
       });
     } catch (e) {
       return error("Failed to reach Apps Script backend.", 502, { detail: String(e) });
