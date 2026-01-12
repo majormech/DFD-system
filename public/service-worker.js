@@ -2,7 +2,7 @@
   service-worker.js – Service worker for offline functionality
 =====================================================================*/
 
-const CACHE_NAME = 'dfd-system-v1';
+const CACHE_NAME = 'dfd-system-v2'; // Increment version
 const urlsToCache = [
   '/',
   '/index.html',
@@ -11,6 +11,16 @@ const urlsToCache = [
   '/search.html',
   '/maintenance.html',
   '/inventory.html',
+  '/daily_check.html',
+  '/maintenance_small_engine.html',
+  '/maintenance_gas_monitor.html',
+  '/maintenance_scba.html',
+  '/maintenance_dive_scba.html',
+  '/maintenance_garage.html',
+  '/scuba.html',
+  '/hose_tower_station1.html',
+  '/spare_hose_station2.html',
+  '/cage_spare_supplies_station1.html',
   '/styles.css',
   '/js/app.js',
   '/js/administration.js',
@@ -18,7 +28,10 @@ const urlsToCache = [
   '/js/search.js',
   '/js/maintenance.js',
   '/js/inventory.js',
-  '/manifest.webmanifest'
+  '/js/daily_check.js',
+  '/manifest.webmanifest',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
 ];
 
 // Install event - cache static assets
@@ -33,6 +46,7 @@ self.addEventListener('install', event => {
       })
       .catch(error => {
         console.error('Failed to cache files:', error);
+        // Don't fail the install - just log the error
       })
   );
 });
@@ -41,6 +55,13 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   // Only cache GET requests
   if (event.request.method !== 'GET') {
+    return;
+  }
+  
+  // Don't cache API requests or dynamic content
+  if (event.request.url.includes('/api') || 
+      event.request.url.includes('nocache') ||
+      event.request.url.includes('/dynamic')) {
     return;
   }
   
@@ -70,12 +91,15 @@ self.addEventListener('fetch', event => {
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
+              })
+              .catch(err => {
+                console.warn('Could not cache:', event.request.url, err);
               });
             
             return response;
           })
           .catch(error => {
-            console.error('Fetch failed:', error);
+            console.error('Network fetch failed:', error);
             // Return a fallback response for critical resources
             if (event.request.destination === 'document') {
               return caches.match('/index.html');
@@ -85,6 +109,10 @@ self.addEventListener('fetch', event => {
       })
       .catch(error => {
         console.error('Cache match failed:', error);
+        // If both cache and network fail, try to serve index.html for documents
+        if (event.request.destination === 'document') {
+          return caches.match('/index.html');
+        }
         throw error;
       })
   );
@@ -102,15 +130,20 @@ self.addEventListener('activate', event => {
         return Promise.all(
           cacheNames.map(cacheName => {
             if (cacheWhitelist.indexOf(cacheName) === -1) {
+              console.log('Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
-          })
+            return null;
+          }).filter(p => p) // Remove null promises
         );
       })
       .catch(error => {
         console.error('Failed to delete old caches:', error);
       })
   );
+  
+  // Claim clients to enable offline functionality immediately
+  return self.clients.claim();
 });
 
 // Handle messages from clients
@@ -132,4 +165,5 @@ async function syncInventoryData() {
   // This would handle syncing any offline inventory changes
   console.log('Syncing inventory data...');
   // Implementation would depend on how you store offline data
+  return Promise.resolve();
 }
