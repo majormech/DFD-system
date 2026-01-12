@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFD – Gas Monitor Maintenance</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <header>
+    <h1>Gas Monitor Maintenance</h1>
+    <nav>
+      <button id="btn-back">Back to Maintenance</button>
+      <button id="btn-admin">Administration</button>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="maintenance-section">
+      <h2>Gas Monitor Repair Group</h2>
+      <p>4-gas monitor, CO2 monitor, H2S monitor, reserve monitors</p>
+      
+      <div class="maintenance-controls">
+        <button id="add-item">Add Item</button>
+        <button id="remove-item">Remove Selected</button>
+        <button id="refresh">Refresh</button>
+      </div>
+      
+      <div class="maintenance-table-container">
+        <table id="maintenance-table">
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Item ID</th>
+              <th>Type</th>
+              <th>Identifier</th>
+              <th>Assigned From</th>
+              <th>Reason</th>
+              <th>Opened</th>
+              <th>Closed</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="maintenance-body">
+            <tr>
+              <td colspan="10">Loading maintenance data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById('btn-back').addEventListener('click', () => {
+      window.location.href = 'maintenance.html';
+    });
+    
+    document.getElementById('btn-admin').addEventListener('click', () => {
+      window.location.href = 'administration.html';
+    });
+  </script>
+</body>
+</html>

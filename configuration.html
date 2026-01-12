@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFD – Configuration</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <header>
+    <h1>DFD – Configuration</h1>
+    <nav>
+      <button id="btn-admin">Back to Administration</button>
+      <button id="btn-search">Search & Print</button>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="config-section">
+      <h2>Configuration Settings</h2>
+      
+      <div class="config-tabs">
+        <button class="tab-button active" data-tab="weekly">Weekly Schedule</button>
+        <button class="tab-button" data-tab="email">Email Recipients</button>
+      </div>
+      
+      <div class="tab-content" id="weekly-tab">
+        <h3>Weekly Schedule Configuration</h3>
+        <div class="form-group">
+          <label for="check-type">Check Type:</label>
+          <select id="check-type">
+            <option value="scbaWeekly">SCBA Weekly</option>
+            <option value="pumpWeekly">Pump Weekly</option>
+            <option value="aerialWeekly">Aerial Weekly</option>
+            <option value="sawWeekly">Saws Weekly</option>
+            <option value="batteriesWeekly">Batteries Weekly</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="due-weekday">Due Weekday:</label>
+          <select id="due-weekday">
+            <option value="Sunday">Sunday</option>
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+          </select>
+        </div>
+        
+        <button id="save-schedule">Save Schedule</button>
+      </div>
+      
+      <div class="tab-content hidden" id="email-tab">
+        <h3>Email Recipients Configuration</h3>
+        <div class="form-group">
+          <label for="email-group">Email Group:</label>
+          <select id="email-group">
+            <option value="issuesByStation">Issues by Station</option>
+            <option value="drugsAllByStation">Drugs All by Station</option>
+            <option value="drugsPrimaryByStation">Drugs Primary by Station</option>
+            <option value="issuesMaster">Master Issues</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="station-id">Station ID:</label>
+          <select id="station-id">
+            <option value="1">Station 1</option>
+            <option value="2">Station 2</option>
+            <option value="3">Station 3</option>
+            <option value="4">Station 4</option>
+            <option value="5">Station 5</option>
+            <option value="6">Station 6</option>
+            <option value="7">Station 7</option>
+            <option value="master">Master</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="email-recipients">Email Recipients (one per line):</label>
+          <textarea id="email-recipients" rows="5" placeholder="email@example.com"></textarea>
+        </div>
+        
+        <button id="save-emails">Save Emails</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/configuration.js"></script>
+</body>
+</html>
