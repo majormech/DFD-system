@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Decatur Fire — Checks</title>
+
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#c41212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <style>
+    :root{
+      --brand:#c41212; --brandInk:#fff;
+      --bg:#f6f7f8; --card:#fff; --ink:#111; --muted:#666;
+      --radius:14px;
+
+      --drugGreen: rgba(31,157,85,.14);
+      --drugYellow: rgba(179,123,0,.14);
+      --drugRed: rgba(200,30,30,.14);
+      --drugBorder: rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--ink)}
+    header{background:var(--brand); color:var(--brandInk); padding:14px 16px; position:sticky; top:0; z-index:10}
+    header h1{margin:0; font-size:18px}
+    main{max-width:980px; margin:0 auto; padding:14px}
+    .card{background:var(--card); border-radius:var(--radius); padding:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:12px}
+    label{display:block; font-weight:600; margin:10px 0 6px}
+    input, select, textarea, button{
+      width:100%; padding:10px 12px; border-radius:12px;
+      border:1px solid #d7dbe0; font:inherit; background:#fff;
+    }
+    textarea{min-height:70px; resize:vertical}
+    .row{display:grid; gap:12px}
+    @media (min-width:760px){ .row{grid-template-columns: 1fr 1fr} }
+    .row3{display:grid; gap:12px}
+    @media (min-width:960px){ .row3{grid-template-columns: 1fr 1fr 1fr} }
+    .muted{color:var(--muted); font-size:13px}
+    .hr{height:1px; background:#e6e9ee; margin:14px 0}
+    .btn{
+      background:var(--brand); color:#fff; border:none; cursor:pointer; font-weight:800;
+      padding:12px 14px;
+    }
+    .btn:active{transform:translateY(1px)}
+    ul{margin:8px 0 0 18px}
+    #status{font-weight:700}
+    .pill{
+      display:inline-block; padding:4px 10px; border-radius:999px;
+      background:#eef1f5; color:#333; font-size:12px; font-weight:700;
+    }
+
+    /* Drug color highlights */
+    .drugRow{
+      border:1px solid var(--drugBorder);
+      border-radius:12px;
+      padding:10px;
+    }
+    .drugGreen{ background: var(--drugGreen); }
+    .drugYellow{ background: var(--drugYellow); }
+    .drugRed{ background: var(--drugRed); }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Decatur Fire — Daily / Weekly Checks (Alpha)</h1>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="row3">
+        <div>
+          <label for="who">Completed By</label>
+          <input id="who" placeholder="Name">
+        </div>
+
+        <div>
+          <label for="station">Station</label>
+          <select id="station"></select>
+        </div>
+
+        <div>
+          <label for="apparatus">Apparatus</label>
+          <select id="apparatus"></select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="checkType">Check Type</label>
+          <select id="checkType"></select>
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button id="saveBtn" class="btn" type="button">Save</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div>
+        <label>Current / Active Issues</label>
+        <div class="muted">Open issues for the selected station + apparatus.</div>
+        <ul id="activeIssues"><li class="muted">Loading…</li></ul>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div>
+          <label for="newIssue">New Issue <span class="pill">Email only sends if filled</span></label>
+          <textarea id="newIssue" placeholder="Describe the new issue (leave blank if no new issue)."></textarea>
+        </div>
+        <div>
+          <label for="newIssueNote">Bullet Note (optional)</label>
+          <input id="newIssueNote" placeholder="Short note shown next to the issue (optional)">
+          <div class="muted" style="margin-top:8px">
+            Examples: “OOS”, “Waiting on parts”, “Needs mechanic”, “Placed spare”.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div id="status" class="muted">Loading…</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Check Form</label>
+      <div id="formArea" class="muted">Select a check type to begin.</div>
+    </div>
+  </main>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js").then((reg) => {
+        reg.onupdatefound = () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.onstatechange = () => {
+            if (nw.state === "installed" && navigator.serviceWorker.controller) {
+              window.location.reload();
+            }
+          };
+        };
+      }).catch(() => {});
+    }
+  </script>
+
+  <script src="/app.js"></script>
+</body>
+</html>
