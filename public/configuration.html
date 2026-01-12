@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DFD — Configuration</title>
+  <meta name="theme-color" content="#c41212">
+  <style>
+    :root{--brand:#c41212;--brandInk:#fff;--bg:#f6f7f9;--card:#fff;--line:#e6e6e6;--ink:#111;--muted:#667085;}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;z-index:10;background:var(--brand);color:var(--brandInk);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.15);}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 14px 70px}
+    h1{margin:0;font-size:16px}
+    .sub{margin:0;opacity:.9;font-size:12px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 10px 22px rgba(0,0,0,.04);margin-top:12px;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+    label{font-size:12px;color:var(--muted);font-weight:900}
+    select,input,textarea{border-radius:10px;border:1px solid var(--line);padding:10px;background:#fff;font-weight:700;}
+    select,input{height:38px;min-width:200px}
+    textarea{width:100%;min-height:220px;resize:vertical;font-weight:700}
+    .btn{height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#111;font-weight:900;cursor:pointer;}
+    .btn.primary{background:#111;color:#fff;border-color:#111}
+    .btn:active{transform:translateY(1px)}
+    .note{color:var(--muted);font-size:12px}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#eef1f5;color:#333;font-size:12px;font-weight:900;border:1px solid rgba(0,0,0,.08);}
+    #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111;color:#fff;border-radius:999px;padding:10px 14px;font-weight:900;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.18s;z-index:9999;}
+    #toast.show{opacity:1}
+    @media (max-width:760px){select,input,.btn{min-width:100%}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h1>DFD — Configuration</h1>
+        <p class="sub">Weekly schedule + station email lists + master issues list.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <a class="btn" href="./index.html" style="text-decoration:none;display:inline-flex;align-items:center">Crew UI</a>
+        <a class="btn" href="./administration.html" style="text-decoration:none;display:inline-flex;align-items:center">Administration</a>
+        <a class="btn" href="./search.html" style="text-decoration:none;display:inline-flex;align-items:center">Search &amp; Print</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <h2 style="margin:0 0 8px;font-size:15px;letter-spacing:.2px">Weekly Schedule</h2>
+    <p class="note" style="margin:0 0 10px">Sets which day the weekly checks are considered due.</p>
+
+    <div class="row">
+      <div>
+        <label for="scheduleTarget">Weekly Item</label><br/>
+        <select id="scheduleTarget">
+          <option value="scbaWeekly">SCBA Weekly</option>
+          <option value="pumpWeekly">Pump Weekly</option>
+          <option value="aerialWeekly">Aerial Weekly</option>
+          <option value="sawWeekly">Saws Weekly</option>
+          <option value="batteriesWeekly">Batteries Weekly</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="weeklyDay">Due Day</label><br/>
+        <select id="weeklyDay"></select>
+      </div>
+
+      <button class="btn" id="btnLoadWeekly">Load</button>
+      <button class="btn primary" id="btnSaveWeekly">Save</button>
+
+      <span class="pill" id="schedStatus">—</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 style="margin:0 0 8px;font-size:15px;letter-spacing:.2px">Email Lists</h2>
+    <p class="note" style="margin:0 0 10px">Enter one email per line (or comma-separated). Issues notify both the station list and MASTER.</p>
+
+    <div class="row">
+      <div>
+        <label for="emailStation">Station</label><br/>
+        <select id="emailStation"></select>
+      </div>
+
+      <div>
+        <label for="emailKind">List Type</label><br/>
+        <select id="emailKind">
+          <option value="issues">Issues (Apparatus / OOS / Problems)</option>
+          <option value="drugsPrimary">Drug Expiration (Primary)</option>
+          <option value="drugsAll">Drug Expiration (All / Digest)</option>
+          <option value="issuesMaster">MASTER Issues List (All Stations)</option>
+        </select>
+      </div>
+
+      <button class="btn" id="btnLoadEmails">Load</button>
+      <button class="btn primary" id="btnSaveEmails">Save</button>
+
+      <span class="pill" id="emailStatus">—</span>
+    </div>
+
+    <div style="margin-top:10px">
+      <label for="emailList">Emails</label>
+      <textarea id="emailList" placeholder="name@example.com"></textarea>
+      <div class="note">Tip: paste from Outlook/Gmail; commas and newlines are accepted.</div>
+    </div>
+  </section>
+</main>
+
+<div id="toast"><span id="toastText">OK</span></div>
+<script src="./configuration.js"></script>
+</body>
+</html>
