@@ -1,7 +1,7 @@
 /* DFD Administration UI (Cloudflare Pages)
    Admin UI now handles ONLY:
      - Apparatus status dashboard
-     - Issues (ACK / NEW / OLD / RESOLVED)
+     - Issues (ACK / NEW / OLD / RESOLVED) 
 
    Talks ONLY to /api (Cloudflare Function proxy).
 
