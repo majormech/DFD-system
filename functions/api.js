@@ -7,7 +7,9 @@ export async function onRequest(context) {
     return new Response("", { status: 204, headers: corsHeaders(request) });
   }
 
-  const gasUrl = env.GAS_URL;
+  const gasUrl =
+    env.GAS_URL ||
+    "https://script.google.com/macros/s/AKfycbylaEuhoPauzxZK9ob_Q-xvc35gEVbsHCcSgvRV-OFs098yWHrNitrTeednxEYA2qpJag/exec";
   if (!gasUrl) {
     return json(
       { ok: false, error: "Server not configured: missing GAS_URL (Pages env var)." },
