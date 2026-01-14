@@ -1,7 +1,7 @@
 /* DFD Administration UI (Cloudflare Pages)
    Admin UI now handles ONLY:
      - Apparatus status dashboard
-     - Issues (ACK / NEW / OLD / RESOLVED) 
+     - Issues (ACK / NEW / OLD / RESOLVED)
 
    Talks ONLY to /api (Cloudflare Function proxy).
 
@@ -16,7 +16,7 @@
 */
 
 const $ = (s) => document.querySelector(s);
-const STATIONS = ["1","2","3","4","5","6","7","R"];
+const STATIONS = ["1", "2", "3", "4", "5", "6", "7", "R"];
 
 function toast(msg, ms = 2200) {
   const t = $("#toast");
@@ -73,7 +73,7 @@ async function apiGet(params) {
 async function apiPost(body) {
   const res = await fetch(`/api`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(body),
   });
   const text = await res.text();
@@ -96,9 +96,9 @@ async function apiPost(body) {
 function requirementsFor(apparatusIdRaw) {
   const id = String(apparatusIdRaw || "").toUpperCase().trim();
 
-  const HAS_PUMP = new Set(["T-2","E-3","E-4","E-5","E-6","E-7","T-3","E-8","E-9"]);
-  const HAS_AERIAL = new Set(["T-2","E-5","T-3"]);
-  const HAS_SAWS = new Set(["T-2","T-3","R-1"]);
+  const HAS_PUMP = new Set(["T-2", "E-3", "E-4", "E-5", "E-6", "E-7", "T-3", "E-8", "E-9"]);
+  const HAS_AERIAL = new Set(["T-2", "E-5", "T-3"]);
+  const HAS_SAWS = new Set(["T-2", "T-3", "R-1"]);
 
   return {
     apparatusDaily: true,
@@ -110,7 +110,6 @@ function requirementsFor(apparatusIdRaw) {
     batteriesWeekly: true,
   };
 }
-
 
 /* ---------- Helpers ---------- */
 function escapeHtml(s) {
@@ -130,7 +129,9 @@ function pill(okOrNull, lastIso) {
   const lastStr = last ? last.toLocaleString() : "—";
   const cls = okOrNull ? "ok" : "bad";
   const label = okOrNull ? "DONE" : "NOT DONE";
-  return `<span class="pill ${cls}">${label}</span><span class="sub">Last: ${escapeHtml(lastStr)}</span>`;
+  return `<span class="pill ${cls}">${label}</span><span class="sub">Last: ${escapeHtml(
+    lastStr
+  )}</span>`;
 }
 
 /* ---------- Status ---------- */
@@ -165,7 +166,7 @@ function renderStatus(status) {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td data-label="Station">${escapeHtml(r.stationName || ("Station " + r.stationId))}</td>
+      <td data-label="Station">${escapeHtml(r.stationName || "Station " + r.stationId)}</td>
       <td data-label="Apparatus">${escapeHtml(r.apparatusId)}</td>
       <td data-label="Apparatus Daily">${cell(req.apparatusDaily, c.apparatusDaily)}</td>
       <td data-label="Medical Daily">${cell(req.medicalDaily, c.medicalDaily)}</td>
@@ -186,10 +187,35 @@ function computedIssueStatus_(iss) {
   if (raw === "OLD") return "OLD";
   if (raw === "NEW") return "NEW";
 
-  const created = iss.createdAt ? new Date(iss.createdAt).getTime() : null;
+  const createdAt = issueCreatedAt_(iss);
+  const created = createdAt ? new Date(createdAt).getTime() : null;
   if (!created) return "NEW";
   const ageHours = (Date.now() - created) / (1000 * 60 * 60);
   return ageHours >= 96 ? "OLD" : "NEW";
+}
+
+function issueIdFor_(iss) {
+  return String(iss?.issueId || iss?.id || iss?.issue_id || "").trim();
+}
+
+function issueCreatedAt_(iss) {
+  return iss?.createdAt || iss?.created_ts || iss?.createdTs || iss?.created;
+}
+
+function issueUpdatedAt_(iss) {
+  return iss?.lastUpdatedAt || iss?.updatedAt || iss?.updated_ts || iss?.updatedTs;
+}
+
+function issueTextFor_(iss) {
+  return iss?.issueText || iss?.text || iss?.issue || "";
+}
+
+function issueNoteFor_(iss) {
+  return iss?.bulletNote || iss?.note || "";
+}
+
+function issueAcknowledged_(iss) {
+  return Boolean(iss?.acknowledged || iss?.ack_ts || iss?.acknowledgedAt);
 }
 
 function groupByApparatus_(issues) {
@@ -211,7 +237,7 @@ function summarizeUnitIssues_(unitIssues) {
     ackCt = 0;
   for (const iss of unitIssues) {
     const computed = computedIssueStatus_(iss);
-    if (iss.acknowledged) ackCt++;
+    if (issueAcknowledged_(iss)) ackCt++;
     else if (computed === "OLD") oldCt++;
     else newCt++;
   }
@@ -222,9 +248,11 @@ function renderIssueRow_(iss) {
   const wrap = document.createElement("div");
   wrap.className = "issue";
 
-  const updated = iss.lastUpdatedAt ? new Date(iss.lastUpdatedAt).toLocaleString() : "—";
+  const issueId = issueIdFor_(iss);
+  const updatedAt = issueUpdatedAt_(iss);
+  const updated = updatedAt ? new Date(updatedAt).toLocaleString() : "—";
   const computedStatus = computedIssueStatus_(iss);
-  const acknowledged = !!iss.acknowledged;
+  const acknowledged = issueAcknowledged_(iss);
 
   wrap.classList.remove("hl-new", "hl-old", "hl-ack");
   if (acknowledged) wrap.classList.add("hl-ack");
@@ -233,34 +261,49 @@ function renderIssueRow_(iss) {
 
   wrap.innerHTML = `
     <div style="min-width:0">
-      <h3>${escapeHtml(iss.apparatusId)} — ${escapeHtml(iss.issueText || "")}</h3>
+      <h3>${escapeHtml(iss.apparatusId)} — ${escapeHtml(issueTextFor_(iss))}</h3>
       <div class="meta">
         Status: <b>${escapeHtml(computedStatus)}</b>
         ${acknowledged ? `• <b>ACK</b>` : ``}
         • Updated: ${escapeHtml(updated)}
       </div>
-      ${iss.bulletNote ? `<div class="meta">Note: ${escapeHtml(iss.bulletNote)}</div>` : ``}
+      ${
+        issueNoteFor_(iss)
+          ? `<div class="meta">Note: ${escapeHtml(issueNoteFor_(iss))}</div>`
+          : ``
+      }
     </div>
 
     <div class="right">
       <label class="toggle" title="Checked = Administration has seen it and is working it (green highlight)">
-        <input type="checkbox" data-ack="${escapeHtml(iss.issueId)}" ${acknowledged ? "checked" : ""}>
+        <input type="checkbox" data-ack="${escapeHtml(issueId)}" ${
+          acknowledged ? "checked" : ""
+        }>
         ACK
       </label>
 
-      <select data-issue="${escapeHtml(iss.issueId)}">
+      <select data-issue="${escapeHtml(issueId)}">
         <option value="NEW" ${computedStatus === "NEW" ? "selected" : ""}>New</option>
         <option value="OLD" ${computedStatus === "OLD" ? "selected" : ""}>Old</option>
         <option value="RESOLVED">Resolved</option>
       </select>
 
-      <button class="btn" data-apply="${escapeHtml(iss.issueId)}">Apply</button>
+      <button class="btn" data-apply="${escapeHtml(issueId)}" ${
+        issueId ? "" : "disabled"
+      }>Apply</button>
     </div>
   `;
 
+  if (!issueId) {
+    wrap
+      .querySelector(".right")
+      ?.insertAdjacentHTML("afterbegin", `<div class="note">Missing issue ID; updates disabled.</div>`);
+    return wrap;
+  }
+
   // ACK toggle
   wrap
-    .querySelector(`input[data-ack="${CSS.escape(iss.issueId)}"]`)
+    .querySelector(`input[data-ack="${CSS.escape(issueId)}"]`)
     ?.addEventListener("change", async (e) => {
       try {
         savePrefs();
@@ -269,7 +312,7 @@ function renderIssueRow_(iss) {
 
         await apiPost({
           action: "updateIssue",
-          issueId: iss.issueId,
+          issueId,
           changes: { acknowledged: ack },
           user,
         });
@@ -283,17 +326,19 @@ function renderIssueRow_(iss) {
 
   // Apply status
   wrap
-    .querySelector(`button[data-apply="${CSS.escape(iss.issueId)}"]`)
+    .querySelector(`button[data-apply="${CSS.escape(issueId)}"]`)
     ?.addEventListener("click", async () => {
       try {
         savePrefs();
         const user = adminName();
-        const status = wrap.querySelector(`select[data-issue="${CSS.escape(iss.issueId)}"]`).value;
-        const ack = !!wrap.querySelector(`input[data-ack="${CSS.escape(iss.issueId)}"]`).checked;
+        const status = wrap.querySelector(
+          `select[data-issue="${CSS.escape(issueId)}"]`
+        ).value;
+        const ack = !!wrap.querySelector(`input[data-ack="${CSS.escape(issueId)}"]`).checked;
 
         await apiPost({
           action: "updateIssue",
-          issueId: iss.issueId,
+          issueId,
           changes: { status, acknowledged: ack },
           user,
         });
@@ -314,7 +359,9 @@ function renderIssues(issues) {
 
   box.innerHTML = "";
 
-  const active = (issues || []).filter((x) => String(x.status || "").toUpperCase() !== "RESOLVED");
+  const active = (issues || []).filter(
+    (x) => String(x.status || "").toUpperCase() !== "RESOLVED"
+  );
   if (!active.length) {
     box.innerHTML = `<div class="note">No active issues.</div>`;
     return;
@@ -324,8 +371,8 @@ function renderIssues(issues) {
 
   for (const [apparatusId, unitIssuesRaw] of grouped) {
     const unitIssues = [...unitIssuesRaw].sort((a, b) => {
-      const aAck = !!a.acknowledged,
-        bAck = !!b.acknowledged;
+      const aAck = issueAcknowledged_(a),
+        bAck = issueAcknowledged_(b);
       if (aAck !== bAck) return aAck ? 1 : -1;
 
       const aSt = computedIssueStatus_(a);
@@ -333,8 +380,8 @@ function renderIssues(issues) {
       const rank = (st) => (st === "OLD" ? 0 : 1);
       if (rank(aSt) !== rank(bSt)) return rank(aSt) - rank(bSt);
 
-      const aT = new Date(a.lastUpdatedAt || a.createdAt || 0).getTime();
-      const bT = new Date(b.lastUpdatedAt || b.createdAt || 0).getTime();
+      const aT = new Date(issueUpdatedAt_(a) || issueCreatedAt_(a) || 0).getTime();
+      const bT = new Date(issueUpdatedAt_(b) || issueCreatedAt_(b) || 0).getTime();
       return bT - aT;
     });
 
@@ -376,7 +423,8 @@ function setIssuesTitle_() {
   const f = selectedStationFilter();
   const el = $("#issuesTitle");
   if (!el) return;
-  el.textContent = f === "all" ? "Active Issues (All Stations)" : `Active Issues (${stationLabel_(f)})`;
+  el.textContent =
+    f === "all" ? "Active Issues (All Stations)" : `Active Issues (${stationLabel_(f)})`;
 }
 
 /* ---------- Refresh ---------- */
@@ -400,20 +448,24 @@ async function fetchIssuesForStation_(stationId) {
 
 function dedupeIssuesById_(issues) {
   const map = new Map();
+  const noId = [];
   for (const iss of issues || []) {
-    const id = iss?.issueId || "";
-    if (!id) continue;
+    const id = issueIdFor_(iss);
+    if (!id) {
+      noId.push(iss);
+      continue;
+    }
 
     const prev = map.get(id);
     if (!prev) {
       map.set(id, iss);
       continue;
     }
-    const pT = new Date(prev.lastUpdatedAt || prev.createdAt || 0).getTime();
-    const nT = new Date(iss.lastUpdatedAt || iss.createdAt || 0).getTime();
+    const pT = new Date(issueUpdatedAt_(prev) || issueCreatedAt_(prev) || 0).getTime();
+    const nT = new Date(issueUpdatedAt_(iss) || issueCreatedAt_(iss) || 0).getTime();
     if (nT >= pT) map.set(id, iss);
   }
-  return Array.from(map.values());
+  return Array.from(map.values()).concat(noId);
 }
 
 async function refreshIssues() {
@@ -421,9 +473,7 @@ async function refreshIssues() {
   let issues = [];
 
   if (f === "all") {
-    const results = await Promise.all(
-      STATIONS.map((st) => fetchIssuesForStation_(st).catch(() => []))
-    );
+    const results = await Promise.all(STATIONS.map((st) => fetchIssuesForStation_(st).catch(() => [])));
     issues = dedupeIssuesById_(results.flat());
   } else {
     issues = await fetchIssuesForStation_(f);
