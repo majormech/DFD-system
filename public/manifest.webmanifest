@@ -1,8 +1,8 @@
 {
-  "name": "Decatur Fire — Checks (Alpha)",
+  "name": "Decatur Fire — Checks",
   "short_name": "DFD Checks",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fafafa",
-  "theme_color": "#c41212",
+  "theme_color": "#c41212"
 }
