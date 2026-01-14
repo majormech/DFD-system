@@ -965,118 +965,54 @@ async function onCheckTypeChange() {
   renderForm();
 }
 
-/* ---------------- Scanner ---------------- */
-let SCAN_STREAM = null;
-let SCAN_ACTIVE = false;
-let SCAN_DETECTOR = null;
+/* ---------------- Scanner (lazy-loaded) ---------------- */
+let SCANNER_LOADING = false;
+let SCANNER_READY = false;
 
-function setScanStatus(msg) {
-  const el = $("#scanStatus");
-  if (!el) return;
-  el.textContent = msg || "";
-}
-
-function normalizeScanValue(value) {
-  return String(value || "").trim().toUpperCase();
-}
-
-function findApparatusFromScan(rawValue) {
-  const sel = $("#apparatus");
-  if (!sel) return null;
-  const cleaned = normalizeScanValue(rawValue);
-  const matches = cleaned.match(/[A-Z]-\d+/g);
-  const candidates = matches?.length ? matches : [cleaned];
-  const options = Array.from(sel.options || []);
-  for (const candidate of candidates) {
-    const option = options.find(
-      (opt) =>
-        normalizeScanValue(opt.value) === candidate ||
-        normalizeScanValue(opt.textContent || "") === candidate ||
-        normalizeScanValue(opt.textContent || "").includes(candidate)
-    );
-    if (option) return option.value;
+function loadScannerScript() {
+  if (SCANNER_READY) return Promise.resolve();
+  if (SCANNER_LOADING) {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (SCANNER_READY) resolve();
+        else setTimeout(check, 50);
+      };
+      check();
+    });
   }
-  return null;
+  SCANNER_LOADING = true;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "/scanner.min.js";
+    script.defer = true;
+    script.onload = () => {
+      SCANNER_READY = true;
+      SCANNER_LOADING = false;
+      resolve();
+    };
+    script.onerror = (err) => {
+      SCANNER_LOADING = false;
+      reject(err);
+    };
+    document.head.appendChild(script);
+  });
 }
 
 async function startScanner() {
-  if (!("BarcodeDetector" in window)) {
-    setScanStatus("Barcode scanning not supported on this device.");
-    return;
-  }
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setScanStatus("Camera access is not available.");
-    return;
-  }
-
-  const backdrop = $("#scanBackdrop");
-  const video = $("#scanVideo");
-  if (!backdrop || !video) return;
-
-  SCAN_DETECTOR =
-    SCAN_DETECTOR ||
-    new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39", "codabar"] });
-  SCAN_ACTIVE = true;
-  backdrop.classList.add("show");
-  backdrop.setAttribute("aria-hidden", "false");
-  setScanStatus("Starting camera…");
-
-  try {
-    SCAN_STREAM = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-      audio: false,
-    });
-    video.srcObject = SCAN_STREAM;
-    await video.play();
-    setScanStatus("Scanning…");
-    requestAnimationFrame(scanLoop);
-  } catch (err) {
-    setScanStatus(`Camera error: ${err?.message || err}`);
-    stopScanner();
-  }
+  await loadScannerScript();
+  if (!window.DFDScanner?.startScanner) return;
+  window.DFDScanner.startScanner({
+    onSelect: async (apparatusValue) => {
+      $("#apparatus").value = apparatusValue;
+      await onApparatusChange();
+      setStatus(`Scanned apparatus ${apparatusValue}.`);
+    },
+    onStatus: (msg) => setStatus(msg),
+  });
 }
 
 function stopScanner() {
-  SCAN_ACTIVE = false;
-  const backdrop = $("#scanBackdrop");
-  const video = $("#scanVideo");
-  if (backdrop) {
-    backdrop.classList.remove("show");
-    backdrop.setAttribute("aria-hidden", "true");
-  }
-  if (video) {
-    video.pause();
-    video.srcObject = null;
-  }
-  if (SCAN_STREAM) {
-    SCAN_STREAM.getTracks().forEach((track) => track.stop());
-    SCAN_STREAM = null;
-  }
-  setScanStatus("");
-}
-
-async function scanLoop() {
-  if (!SCAN_ACTIVE || !SCAN_DETECTOR) return;
-  const video = $("#scanVideo");
-  if (!video) return;
-  try {
-    const barcodes = await SCAN_DETECTOR.detect(video);
-    if (barcodes?.length) {
-      const rawValue = barcodes[0].rawValue || barcodes[0].rawValueText || "";
-      const apparatusValue = findApparatusFromScan(rawValue);
-      if (apparatusValue) {
-        $("#apparatus").value = apparatusValue;
-        stopScanner();
-        await onApparatusChange();
-        setStatus(`Scanned apparatus ${apparatusValue}.`);
-        return;
-      }
-      setScanStatus(`Scanned ${rawValue}. No matching apparatus found.`);
-    }
-  } catch {
-    // Ignore frame errors
-  }
-  requestAnimationFrame(scanLoop);
+  window.DFDScanner?.stopScanner?.();
 }
 
 /* ---------------- Boot ---------------- */
