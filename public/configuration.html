@@ -6,7 +6,7 @@
   <title>DFD System — Configuration</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#c41212">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.min.css">
 </head>
 
 <body>
@@ -44,67 +44,55 @@
         </label>
       </div>
 
-      <div class="grid2" style="margin-top:10px;">
-        <label>
-          Admin name (logged)
-          <input id="adminName" placeholder="Name" />
-        </label>
-
-        <div style="display:flex; align-items:end;">
-          <button id="saveWeekly" class="btn" type="button">Save Weekly Day</button>
-        </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="saveWeeklySchedule" class="btn">Save Weekly Schedule</button>
+        <button id="loadConfig" class="btn secondary">Reload Config</button>
       </div>
-
-      <div class="status"><span id="schedStatus" class="small">—</span></div>
     </div>
 
     <div class="card">
-      <h2 style="margin:0 0 10px;">Email Lists</h2>
-      <div class="small">One email per line (or comma-separated). Save affects only the selected list.</div>
+      <h2 style="margin:0 0 10px;">Drug Master</h2>
 
-      <div class="grid2" style="margin-top:10px;">
-        <label>
-          Station
-          <select id="stationPick">
-            <option value="1">Station 1</option>
-            <option value="2">Station 2</option>
-            <option value="3">Station 3</option>
-            <option value="4">Station 4</option>
-            <option value="5">Station 5</option>
-            <option value="6">Station 6</option>
-            <option value="7">Station 7</option>
-            <option value="R">Reserve Apparatus</option>
-          </select>
-        </label>
+      <div class="small">Manage default drug list entries and expiration hints.</div>
 
-        <label>
-          List type
-          <select id="listType">
-            <option value="issues_station">Issues (this station)</option>
-            <option value="drugs_station">Drug Expiration (this station)</option>
-            <option value="issues_master">MASTER Issues (all stations)</option>
-          </select>
-        </label>
+      <div id="drugRows" class="small" style="margin-top:10px;"></div>
+
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="addDrugRow" class="btn">Add Drug Row</button>
+        <button id="saveDrugMaster" class="btn secondary">Save Drug Master</button>
       </div>
-
-      <label style="margin-top:10px;">
-        Recipients
-        <textarea id="emailBox" placeholder="one@example.com&#10;two@example.com"></textarea>
-      </label>
-
-      <div class="grid2">
-        <button id="reloadEmails" class="btn" type="button">Reload</button>
-        <button id="saveEmails" class="btn" type="button">Save Email List</button>
-      </div>
-
-      <div class="status"><span id="emailStatus" class="small">—</span></div>
     </div>
 
     <div class="card">
-      <div class="small">
-        <a href="/">Checks</a> &nbsp;|&nbsp;
-        <a href="/administration.html">Administration</a> &nbsp;|&nbsp;
-        <a href="/search.html">Search &amp; Print</a>
+      <h2 style="margin:0 0 10px;">Stations & Apparatus</h2>
+
+      <div class="small">Configure stations and apparatus list.</div>
+      <textarea id="stationsJson" style="height:260px;width:100%;margin-top:10px"></textarea>
+
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="saveStations" class="btn">Save Stations</button>
+        <button id="resetStations" class="btn secondary">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 10px;">System Settings</h2>
+
+      <div class="small">Adjust defaults for crew entries.</div>
+
+      <div class="grid2" style="margin-top:10px">
+        <label>
+          Default Station ID
+          <input id="stationIdDefault" placeholder="1">
+        </label>
+        <label>
+          Default Check Type
+          <input id="defaultCheckType" placeholder="apparatusDaily">
+        </label>
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="saveConfigSettings" class="btn">Save Settings</button>
       </div>
     </div>
   </div>
