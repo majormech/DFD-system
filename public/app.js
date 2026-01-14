@@ -527,57 +527,62 @@ function renderForm() {
         ${renderDailyItem_("Batteries", "extrication_batteries")}
         ${renderDailyItem_("Ram", "extrication_ram")}
       `
-      : ``;
+      : "";
 
     area.innerHTML = formWrap(`
-      <div class="muted" style="margin-bottom:10px">
-        Full apparatus daily checklist.
+      <div class="row">
+        <label>Odometer / Mileage
+          <input id="mileage" type="number" min="0" />
+        </label>
+        <label>Engine Hours
+          <input id="engineHours" type="number" min="0" />
+        </label>
+        <label>Fuel %
+          <input id="fuel" type="number" min="0" max="100" />
+        </label>
+        <label>DEF %
+          <input id="def" type="number" min="0" max="100" />
+        </label>
       </div>
-
-      <label>Mileage</label><input id="mileage" type="number" min="0" />
-      <label>Engine Hours</label><input id="engineHours" type="number" min="0" />
-      <label>Fuel %</label><input id="fuel" type="number" min="0" max="100" />
-      <label>DEF %</label><input id="def" type="number" min="0" max="100" />
-      <label>Tank Water %</label><input id="tank" type="number" min="0" max="100" />
+      <label>Tank %
+        <input id="tank" type="number" min="0" max="100" />
+      </label>
 
       <div class="hr"></div>
-      <div style="font-weight:900;margin-bottom:8px">Checklist Items</div>
-
-      ${renderDailyItem_("Knox Box Keys", "knox")}
-      ${renderDailyItem_("Portable Radios (4)", "radios")}
+      <div style="font-weight:900;margin-bottom:8px">Daily Checklist</div>
+      ${renderDailyItem_("Knox Box", "knox")}
+      ${renderDailyItem_("Radios", "radios")}
       ${renderDailyItem_("Lights", "lights")}
-      ${renderDailyItem_("SCBA (4)", "scba")}
+      ${renderDailyItem_("SCBA", "scba")}
       ${renderDailyItem_("Spare Bottles", "spareBottles")}
       ${renderDailyItem_("RIT Pack", "rit")}
-      ${renderDailyItem_("Flash Lights", "flashlights")}
-      ${renderDailyItem_("TIC (4)", "tic")}
+      ${renderDailyItem_("Flashlights", "flashlights")}
+      ${renderDailyItem_("TIC", "tic")}
       ${renderDailyItem_("Gas Monitor", "gasMonitor")}
       ${renderDailyItem_("Hand Tools", "handTools")}
-      ${renderDailyItem_("Hydra-Ram", "hydraRam")}
+      ${renderDailyItem_("Hydra Ram", "hydraRam")}
       ${renderDailyItem_("Ground Ladders", "groundLadders")}
-      ${renderDailyItem_("Passports/Shields", "passports")}
-
+      ${renderDailyItem_("Passports", "passports")}
       ${extricationSection}
     `);
+
     return;
   }
 
   if (type === "medicalDaily") {
-    const drugs = CONFIG?.drugs || [];
-    const defaultQty = CONFIG?.defaultQty || {};
-
-    const rows = drugs
-      .map((name) => {
-        const last = toYmdDateInput(DRUG_MASTER[name] || "");
-        const qty = defaultQty[name] ?? "";
+    const drugs = CONFIG?.drugMaster || [];
+    const rows = (drugs || [])
+      .map((drug) => {
+        const name = String(drug.name || "");
+        const qty = Number(drug.qty || 0);
+        const last = DRUG_MASTER[name] || "";
         const cls = drugClassForExp(last);
         const days = prettyDaysLabel(last);
 
         return `
           <div class="drugRow ${cls}" data-drug="${escapeHtml(name)}">
-            <div style="font-weight:800">${escapeHtml(name)}</div>
-            <div class="muted" style="margin:4px 0 10px">
-              Last known Exp: <b>${escapeHtml(last || "—")}</b>
+            <div style="font-weight:800;margin-bottom:8px">
+              ${escapeHtml(name)}
               ${
                 days
                   ? ` <span class="pill" style="margin-left:6px">${escapeHtml(days)}</span>`
@@ -660,11 +665,10 @@ function renderForm() {
   if (type === "pumpWeekly") {
     area.innerHTML = formWrap(`
       <label>Pump Shift</label><input id="pumpShift" placeholder="Pass / Fail or notes"/>
-      <label>Throttle Valves</label><input id="throttle" placeholder="Pass / Fail or notes"/>
+      <label>Throttle</label><input id="throttle" placeholder="Pass / Fail or notes"/>
       <label>Relief Valve</label><input id="relief" placeholder="Pass / Fail or notes"/>
       <label>Gauges</label><input id="gauges" placeholder="Pass / Fail or notes"/>
-      <label>Overall</label>
-      <select id="overall"><option>Pass</option><option>Fail</option></select>
+      <label>Overall</label><input id="overall" placeholder="Pass / Fail or notes"/>
       <label>Notes</label><textarea id="pumpNotes"></textarea>
     `);
     return;
@@ -672,11 +676,8 @@ function renderForm() {
 
   if (type === "aerialWeekly") {
     area.innerHTML = formWrap(`
-      <div class="muted">Aerial weekly (basic).</div>
-      <label>Overall</label>
-      <select id="aerialOverall"><option>Pass</option><option>Fail</option></select>
-      <label>Notes</label>
-      <textarea id="aerialNotes"></textarea>
+      <label>Overall</label><input id="aerialOverall" placeholder="Pass / Fail or notes"/>
+      <label>Notes</label><textarea id="aerialNotes"></textarea>
     `);
     return;
   }
@@ -689,10 +690,10 @@ function renderForm() {
           (i) => `
           <div class="drugRow" style="margin-top:${i === 1 ? 0 : 10}px">
             <div style="font-weight:800;margin-bottom:6px">Saw ${i}</div>
-            <label style="margin-top:0">Type (Roof/Rotary)</label><input class="sawType" />
-            <label>Saw #</label><input class="sawNumber" type="number" min="0" />
-            <label>Fuel %</label><input class="sawFuel" type="number" min="0" max="100" />
-            <label>Bar Oil %</label><input class="sawBarOil" type="number" min="0" max="100" />
+            <label style="margin-top:0">Type</label><input class="sawType" />
+            <label>Number</label><input class="sawNumber" type="number" min="0" />
+            <label>Fuel (0-100%)</label><input class="sawFuel" type="number" min="0" max="100" />
+            <label>Bar Oil (0-100%)</label><input class="sawBarOil" type="number" min="0" max="100" />
             <label>Runs</label>
             <select class="sawRuns"><option>Yes</option><option>No</option></select>
             <label>Notes</label><input class="sawNotes" />
@@ -706,16 +707,18 @@ function renderForm() {
 
   if (type === "batteriesWeekly") {
     area.innerHTML = formWrap(`
-      <label>Battery Tools</label><input id="batteryTools" />
-      <label>4-Gas Monitor Charged</label><input id="gasMonitorCharged" />
-      <label>Unit Phone Charged</label><input id="unitPhoneCharged" />
+      <label>Battery Tools</label><input id="batteryTools" placeholder="OK / Needs attention" />
+      <label>Gas Monitor Charged</label><input id="gasMonitorCharged" placeholder="Yes / No" />
+      <label>Unit Phone Charged</label><input id="unitPhoneCharged" placeholder="Yes / No" />
       <label>Notes</label><textarea id="batteryNotes"></textarea>
-      <label>Extrication Check</label><input id="extricationCheck" />
-      <label>Spreader</label><input id="spreader" />
-      <label>Cutter</label><input id="cutter" />
-      <label>Ram</label><input id="ram" />
-      <label>All 6 Batteries Charged</label><input id="allCharged" />
-      <label>Damage Noted</label><input id="damage" />
+      <div class="hr"></div>
+      <div style="font-weight:900;margin-bottom:8px">Extrication Equipment</div>
+      <label>Extrication Check</label><input id="extricationCheck" placeholder="OK / Needs attention" />
+      <label>Spreader</label><input id="spreader" placeholder="OK / Needs attention" />
+      <label>Cutter</label><input id="cutter" placeholder="OK / Needs attention" />
+      <label>Ram</label><input id="ram" placeholder="OK / Needs attention" />
+      <label>All Charged</label><input id="allCharged" placeholder="Yes / No" />
+      <label>Damage</label><input id="damage" placeholder="Yes / No" />
     `);
     return;
   }
@@ -723,20 +726,20 @@ function renderForm() {
   if (type === "oosUnit") {
     area.innerHTML = formWrap(`
       <label>Reason</label><textarea id="oosReason"></textarea>
-      <label>Replacing Reserve Unit</label><input id="oosReplacementReserve" placeholder="E-8 / E-9 / T-3 etc." />
-      <label>Equipment Moved (list)</label><input id="oosEquipmentMoved" placeholder="comma list" />
-      <label>Return To Service Date (optional)</label><input id="oosRtsDate" type="date" />
+      <label>Replacement Reserve</label><input id="oosReplacementReserve" placeholder="Reserve apparatus" />
+      <label>Equipment Moved</label><input id="oosEquipmentMoved" placeholder="Yes / No" />
+      <label>RTS Date</label><input id="oosRtsDate" type="date" />
     `);
     return;
   }
 
   if (type === "oosEquipment") {
     area.innerHTML = formWrap(`
-      <label>Equipment Type (SCBA/Saw/4-Gas/Bag Monitor/Other)</label><input id="eqType" />
-      <label>Identifier</label><input id="eqIdentifier" />
+      <label>Equipment Type</label><input id="eqType" />
+      <label>Equipment Identifier</label><input id="eqIdentifier" />
       <label>Reason</label><textarea id="eqReason"></textarea>
       <label>Replacement</label><input id="eqReplacement" />
-      <label>Expected RTS Date (optional)</label><input id="eqRtsDate" type="date" />
+      <label>RTS Date</label><input id="eqRtsDate" type="date" />
     `);
     return;
   }
@@ -1124,3 +1127,7 @@ async function boot() {
   updateSyncBadge();
   await flushOfflineQueue();
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  boot().catch((err) => setStatus(err.message, true));
+});
