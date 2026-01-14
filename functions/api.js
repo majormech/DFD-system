@@ -2,6 +2,7 @@
 export async function onRequest(context) {
   const { request, env } = context;
 
+  
   if (request.method === "OPTIONS") {
     return new Response("", { status: 204, headers: corsHeaders(request) });
   }
