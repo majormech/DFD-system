@@ -29,6 +29,7 @@
     }
     .btn.primary{background:#111;color:#fff;border-color:#111}
     .btn:active{transform:translateY(1px)}
+    .btn.ghost{background:#fff;color:#111;border:1px dashed #999}
     .card{
       background:var(--card);
       border:1px solid var(--line);
@@ -69,6 +70,20 @@
     }
     tbody tr:last-child td{border-bottom:none}
     .note{color:var(--muted);font-size:12px}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 10px;border-radius:999px;font-size:11px;font-weight:900;
+      border:1px solid var(--line);background:#fff;
+    }
+    .priority-critical{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+    .priority-high{background:#ffedd5;color:#9a3412;border-color:#fed7aa}
+    .priority-medium{background:#fef9c3;color:#854d0e;border-color:#fde047}
+    .priority-low{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .summaryGrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+    .summaryCard{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff}
+    .trendBar{height:10px;border-radius:999px;background:linear-gradient(90deg,#111,#c41212)}
+    .trendRow{display:grid;grid-template-columns:120px 1fr 60px;align-items:center;gap:10px;font-size:12px}
+    .hr{border-top:1px solid var(--line)}
 
     /* Mobile stacked table */
     @media (max-width: 780px){
@@ -162,6 +177,20 @@
         </div>
 
         <div>
+          <label for="periodPreset">Quick Period</label><br/>
+          <select id="periodPreset">
+            <option value="">Custom</option>
+            <option value="today">Today</option>
+            <option value="last7">Last 7 Days</option>
+            <option value="last30">Last 30 Days</option>
+            <option value="last90">Last 90 Days</option>
+            <option value="monthToDate">Month to Date</option>
+            <option value="yearToDate">Year to Date</option>
+            <option value="lastMonth">Last Month</option>
+          </select>
+        </div>
+
+        <div>
           <label for="to">To</label><br/>
           <input id="to" type="date" />
         </div>
@@ -181,11 +210,56 @@
           </select>
         </div>
 
+        <div>
+          <label for="priorityFilter">Attention Level</label><br/>
+          <select id="priorityFilter">
+            <option value="all" selected>All Levels</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+
         <button class="btn primary" id="btnSearch">Search</button>
       </div>
 
       <div class="note" style="margin-top:10px">
         Tip: searches scan the full row contents, so “Knox”, “radios”, “4500”, “engine hours”, names, notes, etc. will match.
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div style="flex:1 1 240px">
+          <label for="templateName">Report Template Name</label><br/>
+          <input id="templateName" type="text" placeholder="e.g., Monthly Station 1 report">
+        </div>
+        <div>
+          <label for="templateSelect">Saved Templates</label><br/>
+          <select id="templateSelect">
+            <option value="">Select template…</option>
+          </select>
+        </div>
+        <button class="btn ghost" id="btnSaveTemplate">Save Template</button>
+        <button class="btn" id="btnDeleteTemplate">Delete Template</button>
+        <div style="flex:1 1 100%"></div>
+        <button class="btn" id="btnExportCsv">Export CSV</button>
+        <button class="btn" id="btnExportExcel">Export Excel</button>
+        <button class="btn" id="btnExportPdf">Export PDF</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h2 style="margin:0;font-size:16px">Report Summary</h2>
+        <div class="note" id="summaryRange">—</div>
+      </div>
+      <div class="summaryGrid" id="summaryGrid" style="margin-top:10px">
+        <div class="summaryCard note">Run a search to generate summary metrics.</div>
+      </div>
+      <div class="hr" style="margin:14px 0;border-top:1px solid var(--line)"></div>
+      <div>
+        <h3 style="margin:0 0 8px;font-size:14px">Trend Analysis</h3>
+        <div id="trendList" class="note">Run a search to view trends.</div>
       </div>
     </section>
 
