@@ -38,7 +38,11 @@
 
         <label>
           Apparatus
-          <select id="apparatus"></select>
+          <div class="inputRow">
+            <select id="apparatus"></select>
+            <button id="scanBtn" class="btn secondary" type="button">Scan</button>
+          </div>
+          <div class="small">Scan a barcode/QR code to auto-select the apparatus.</div>
         </label>
       </div>
 
@@ -89,7 +93,10 @@
         </label>
       </div>
 
-      <div class="status" id="status">Loading…</div>
+      <div class="statusRow">
+        <div class="status" id="status">Loading…</div>
+        <div class="badge warn" id="syncBadge" hidden>Offline queue: 0</div>
+      </div>
     </div>
 
     <!-- Dynamic Check Form -->
@@ -100,6 +107,18 @@
       </div>
     </div>
   </main>
+
+  <div class="scanBackdrop" id="scanBackdrop" aria-hidden="true">
+    <div class="scanPanel" role="dialog" aria-modal="true" aria-labelledby="scanTitle">
+      <div class="scanHeader">
+        <h2 id="scanTitle" style="margin:0;font-size:16px">Scan Apparatus</h2>
+        <button class="btn secondary" id="scanCloseBtn" type="button">Close</button>
+      </div>
+      <p class="small">Point the camera at a barcode or QR code that matches an apparatus ID (e.g., E-1).</p>
+      <video id="scanVideo" class="scanVideo" playsinline></video>
+      <div class="small" id="scanStatus" style="margin-top:10px"></div>
+    </div>
+  </div>
 
   <!-- Service Worker -->
   <script>

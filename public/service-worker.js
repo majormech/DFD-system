@@ -1,6 +1,6 @@
 // service-worker.js — Decatur Fire PWA
 
-const CACHE_VERSION = "v1.0.0"; // <-- bump this when you deploy changes
+const CACHE_VERSION = "v1.1.0"; // <-- bump this when you deploy changes
 const CACHE_NAME = `dfd-checks-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -8,6 +8,12 @@ const ASSETS = [
   "/index.html",
   "/styles.css",
   "/app.js",
+  "/search.html",
+  "/search.js",
+  "/administration.html",
+  "/administration.js",
+  "/configuration.html",
+  "/configuration.js",
   "/manifest.webmanifest"
 ];
 
