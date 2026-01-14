@@ -234,9 +234,9 @@ async function flushOfflineQueue() {
 function requirementsFor(apparatusIdRaw) {
   const id = String(apparatusIdRaw || "").toUpperCase().trim();
 
-  const HAS_PUMP = new Set(["T-2", "E-3", "E-4", "E-5", "E-6", "E-7", "T-3", "E-8", "E-9"]);
-  const HAS_AERIAL = new Set(["T-2", "E-5", "T-3"]);
-  const HAS_SAWS = new Set(["T-2", "T-3", "R-1"]);
+  const HAS_PUMP = new Set(["T-2", "E-1", "E-3", "E-4", "E-5", "E-6", "E-7", "T-3", "E-8", "E-9"]);
+  const HAS_AERIAL = new Set(["T-1", "T-2", "E-5", "T-3"]);
+  const HAS_SAWS = new Set(["T-1", "T-2", "T-3", "R-1"]);
 
   return {
     apparatusDaily: true,
