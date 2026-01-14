@@ -1,19 +1,17 @@
 // service-worker.js — Decatur Fire PWA
 
-const CACHE_VERSION = "v1.1.0"; // <-- bump this when you deploy changes
+const CACHE_VERSION = "v1.3.0"; // <-- bump this when you deploy changes
 const CACHE_NAME = `dfd-checks-${CACHE_VERSION}`;
+const HTML_CACHE = `dfd-html-${CACHE_VERSION}`;
 
 const ASSETS = [
   "/",
   "/index.html",
-  "/styles.css",
-  "/app.js",
+  "/styles.min.css",
+  "/app.min.js",
   "/search.html",
-  "/search.js",
-  "/administration.html",
-  "/administration.js",
-  "/configuration.html",
-  "/configuration.js",
+  "/search.min.js",
+  "/scanner.min.js",
   "/manifest.webmanifest"
 ];
 
@@ -29,7 +27,11 @@ self.addEventListener("activate", (event) => {
   // Delete old caches
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)))
+      Promise.all(
+        keys.map((k) =>
+          k !== CACHE_NAME && k !== HTML_CACHE ? caches.delete(k) : null
+        )
+      )
     )
   );
   // Take control immediately
@@ -42,10 +44,21 @@ self.addEventListener("fetch", (event) => {
   // Never cache API calls
   if (url.pathname.startsWith("/api")) return;
 
-  // Always fetch fresh HTML (prevents stale UI shell)
+  // HTML: stale-while-revalidate for faster repeat loads
   const accept = event.request.headers.get("accept") || "";
   if (accept.includes("text/html")) {
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      caches.open(HTML_CACHE).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const network = fetch(event.request)
+          .then((res) => {
+            cache.put(event.request, res.clone());
+            return res;
+          })
+          .catch(() => cached);
+        return cached || network;
+      })
+    );
     return;
   }
 
