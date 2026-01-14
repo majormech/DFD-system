@@ -1,7 +1,7 @@
 /* DFD Administration UI (Cloudflare Pages)
    Admin UI now handles ONLY:
      - Apparatus status dashboard
-     - Issues (ACK / NEW / OLD / RESOLVED)
+     - Issues (ACK / NEW / OLD / RESOLVED) 
 
    Talks ONLY to /api (Cloudflare Function proxy).
 
@@ -16,7 +16,7 @@
 */
 
 const $ = (s) => document.querySelector(s);
-const STATIONS = ["1", "2", "3", "4", "5", "6", "7", "R"];
+const STATIONS = ["1","2","3","4","5","6","7","R"];
 
 function toast(msg, ms = 2200) {
   const t = $("#toast");
@@ -73,7 +73,7 @@ async function apiGet(params) {
 async function apiPost(body) {
   const res = await fetch(`/api`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(body),
   });
   const text = await res.text();
@@ -96,9 +96,9 @@ async function apiPost(body) {
 function requirementsFor(apparatusIdRaw) {
   const id = String(apparatusIdRaw || "").toUpperCase().trim();
 
-  const HAS_PUMP = new Set(["T-2", "E-3", "E-4", "E-5", "E-6", "E-7", "T-3", "E-8", "E-9"]);
-  const HAS_AERIAL = new Set(["T-2", "E-5", "T-3"]);
-  const HAS_SAWS = new Set(["T-2", "T-3", "R-1"]);
+  const HAS_PUMP = new Set(["T-2","E-3","E-4","E-5","E-6","E-7","T-3","E-8","E-9"]);
+  const HAS_AERIAL = new Set(["T-2","E-5","T-3"]);
+  const HAS_SAWS = new Set(["T-2","T-3","R-1"]);
 
   return {
     apparatusDaily: true,
@@ -110,6 +110,7 @@ function requirementsFor(apparatusIdRaw) {
     batteriesWeekly: true,
   };
 }
+
 
 /* ---------- Helpers ---------- */
 function escapeHtml(s) {
@@ -129,13 +130,31 @@ function pill(okOrNull, lastIso) {
   const lastStr = last ? last.toLocaleString() : "—";
   const cls = okOrNull ? "ok" : "bad";
   const label = okOrNull ? "DONE" : "NOT DONE";
-  return `<span class="pill ${cls}">${label}</span><span class="sub">Last: ${escapeHtml(
-    lastStr
-  )}</span>`;
+  return `<span class="pill ${cls}">${label}</span><span class="sub">Last: ${escapeHtml(lastStr)}</span>`;
 }
 
 /* ---------- Status ---------- */
 let LAST_ADMIN_STATUS = null;
+
+function statusRowsFrom_(status) {
+  return (
+    status?.rows ||
+    status?.statusRows ||
+    status?.apparatusRows ||
+    status?.apparatus ||
+    status?.items ||
+    status?.data ||
+    []
+  );
+}
+
+function normalizeAdminStatus_(status) {
+  const rows = statusRowsFrom_(status);
+  return {
+    ...status,
+    rows: Array.isArray(rows) ? rows : [],
+  };
+}
 
 function renderStatus(status) {
   const tb = $("#statusTable tbody");
@@ -144,7 +163,7 @@ function renderStatus(status) {
   tb.innerHTML = "";
 
   const filter = selectedStationFilter();
-  let rows = status?.rows || [];
+  let rows = statusRowsFrom_(status);
 
   if (filter !== "all") {
     rows = rows.filter((r) => String(r.stationId || "") === String(filter));
@@ -166,7 +185,7 @@ function renderStatus(status) {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td data-label="Station">${escapeHtml(r.stationName || "Station " + r.stationId)}</td>
+      <td data-label="Station">${escapeHtml(r.stationName || ("Station " + r.stationId))}</td>
       <td data-label="Apparatus">${escapeHtml(r.apparatusId)}</td>
       <td data-label="Apparatus Daily">${cell(req.apparatusDaily, c.apparatusDaily)}</td>
       <td data-label="Medical Daily">${cell(req.medicalDaily, c.medicalDaily)}</td>
@@ -267,18 +286,12 @@ function renderIssueRow_(iss) {
         ${acknowledged ? `• <b>ACK</b>` : ``}
         • Updated: ${escapeHtml(updated)}
       </div>
-      ${
-        issueNoteFor_(iss)
-          ? `<div class="meta">Note: ${escapeHtml(issueNoteFor_(iss))}</div>`
-          : ``
-      }
+      ${issueNoteFor_(iss) ? `<div class="meta">Note: ${escapeHtml(issueNoteFor_(iss))}</div>` : ``}
     </div>
 
     <div class="right">
       <label class="toggle" title="Checked = Administration has seen it and is working it (green highlight)">
-        <input type="checkbox" data-ack="${escapeHtml(issueId)}" ${
-          acknowledged ? "checked" : ""
-        }>
+        <input type="checkbox" data-ack="${escapeHtml(issueId)}" ${acknowledged ? "checked" : ""}>
         ACK
       </label>
 
@@ -288,16 +301,15 @@ function renderIssueRow_(iss) {
         <option value="RESOLVED">Resolved</option>
       </select>
 
-      <button class="btn" data-apply="${escapeHtml(issueId)}" ${
-        issueId ? "" : "disabled"
-      }>Apply</button>
+      <button class="btn" data-apply="${escapeHtml(issueId)}" ${issueId ? "" : "disabled"}>Apply</button>
     </div>
   `;
 
   if (!issueId) {
-    wrap
-      .querySelector(".right")
-      ?.insertAdjacentHTML("afterbegin", `<div class="note">Missing issue ID; updates disabled.</div>`);
+    wrap.querySelector(".right")?.insertAdjacentHTML(
+      "afterbegin",
+      `<div class="note">Missing issue ID; updates disabled.</div>`
+    );
     return wrap;
   }
 
@@ -331,9 +343,7 @@ function renderIssueRow_(iss) {
       try {
         savePrefs();
         const user = adminName();
-        const status = wrap.querySelector(
-          `select[data-issue="${CSS.escape(issueId)}"]`
-        ).value;
+        const status = wrap.querySelector(`select[data-issue="${CSS.escape(issueId)}"]`).value;
         const ack = !!wrap.querySelector(`input[data-ack="${CSS.escape(issueId)}"]`).checked;
 
         await apiPost({
@@ -359,9 +369,7 @@ function renderIssues(issues) {
 
   box.innerHTML = "";
 
-  const active = (issues || []).filter(
-    (x) => String(x.status || "").toUpperCase() !== "RESOLVED"
-  );
+  const active = (issues || []).filter((x) => String(x.status || "").toUpperCase() !== "RESOLVED");
   if (!active.length) {
     box.innerHTML = `<div class="note">No active issues.</div>`;
     return;
@@ -423,14 +431,13 @@ function setIssuesTitle_() {
   const f = selectedStationFilter();
   const el = $("#issuesTitle");
   if (!el) return;
-  el.textContent =
-    f === "all" ? "Active Issues (All Stations)" : `Active Issues (${stationLabel_(f)})`;
+  el.textContent = f === "all" ? "Active Issues (All Stations)" : `Active Issues (${stationLabel_(f)})`;
 }
 
 /* ---------- Refresh ---------- */
 function apparatusSetForStation_(stationId) {
   const set = new Set();
-  const rows = LAST_ADMIN_STATUS?.rows || [];
+  const rows = statusRowsFrom_(LAST_ADMIN_STATUS);
   for (const r of rows) {
     if (String(r.stationId) === String(stationId)) set.add(String(r.apparatusId || "").trim());
   }
@@ -473,7 +480,9 @@ async function refreshIssues() {
   let issues = [];
 
   if (f === "all") {
-    const results = await Promise.all(STATIONS.map((st) => fetchIssuesForStation_(st).catch(() => [])));
+    const results = await Promise.all(
+      STATIONS.map((st) => fetchIssuesForStation_(st).catch(() => []))
+    );
     issues = dedupeIssuesById_(results.flat());
   } else {
     issues = await fetchIssuesForStation_(f);
@@ -491,8 +500,9 @@ async function refreshIssues() {
 
 async function refreshStatus() {
   const s = await apiGet({ action: "getAdminStatus" });
-  LAST_ADMIN_STATUS = s.status || null;
-  renderStatus(LAST_ADMIN_STATUS || { rows: [] });
+  const payload = s.status || s || null;
+  LAST_ADMIN_STATUS = normalizeAdminStatus_(payload);
+  renderStatus(LAST_ADMIN_STATUS);
 }
 
 async function refreshAll() {
