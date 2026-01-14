@@ -484,6 +484,7 @@ function exportExcel(rows) {
   `;
   downloadBlob(html, "dfd-report.xls", "application/vnd.ms-excel");
 }
+
 async function runSearch() {
   const stationId = $("#stationId").value || "all";
   const apparatusId = $("#apparatusId").value || "all";
