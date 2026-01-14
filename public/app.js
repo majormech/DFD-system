@@ -31,6 +31,24 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeText(s) {
+  return String(s || "").toLowerCase();
+}
+
+function safeUuid() {
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function attentionClassForText(text) {
+  const t = normalizeText(text);
+  if (!t) return "";
+  if (/(out of service|oos|critical|expired|missing|failed|failure)/.test(t)) return "issue-critical";
+  if (/(fail|needs mechanic|broken|leak|not working|immediate)/.test(t)) return "issue-high";
+  if (/(warning|maintenance|service|needs attention|soon|low)/.test(t)) return "issue-medium";
+  return "issue-low";
+}
+
 /* Normalize any incoming date-ish value to HTML date input format: YYYY-MM-DD */
 function toYmdDateInput(v) {
   if (!v) return "";
@@ -120,6 +138,89 @@ async function apiGetSoft(params) {
     const m = String(e?.message || "").toLowerCase();
     if (m.includes("unknown action")) return null;
     throw e;
+  }
+}
+
+/* ---------------- Offline queue + sync ---------------- */
+const OFFLINE_QUEUE_KEY = "dfd_offline_queue_v1";
+let SYNCING_QUEUE = false;
+
+function loadOfflineQueue() {
+  try {
+    const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOfflineQueue(queue) {
+  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+}
+
+function updateSyncBadge() {
+  const badge = $("#syncBadge");
+  if (!badge) return;
+  const queue = loadOfflineQueue();
+  const count = queue.length;
+  if (count === 0 && navigator.onLine) {
+    badge.hidden = true;
+    return;
+  }
+  badge.hidden = false;
+  badge.textContent = navigator.onLine
+    ? `Pending sync: ${count}`
+    : `Offline queue: ${count}`;
+  badge.classList.toggle("warn", !navigator.onLine);
+}
+
+function isLikelyOfflineError(err) {
+  const msg = normalizeText(err?.message || "");
+  return !navigator.onLine || msg.includes("failed to fetch") || msg.includes("networkerror");
+}
+
+async function enqueueOfflineSave(payload, reason = "Offline") {
+  const queue = loadOfflineQueue();
+  queue.push({
+    id: safeUuid(),
+    createdAt: new Date().toISOString(),
+    reason,
+    payload,
+  });
+  saveOfflineQueue(queue);
+  updateSyncBadge();
+}
+
+async function flushOfflineQueue() {
+  if (SYNCING_QUEUE) return;
+  if (!navigator.onLine) {
+    updateSyncBadge();
+    return;
+  }
+  const queue = loadOfflineQueue();
+  if (!queue.length) {
+    updateSyncBadge();
+    return;
+  }
+  SYNCING_QUEUE = true;
+  try {
+    const remaining = [];
+    for (const item of queue) {
+      try {
+        await apiPost(item.payload);
+      } catch (err) {
+        if (isLikelyOfflineError(err)) {
+          remaining.push(item);
+          break;
+        }
+        remaining.push(item);
+      }
+    }
+    saveOfflineQueue(remaining);
+  } finally {
+    SYNCING_QUEUE = false;
+    updateSyncBadge();
   }
 }
 
@@ -293,7 +394,8 @@ function renderActiveIssues(issues) {
       const note = iss.note || iss.bulletNote || "";
       const status = String(iss.status || "NEW").toUpperCase();
       const txt = `${iss.issueText || ""}${note ? ` — ${note}` : ""} (${status})`;
-      return `<li>${escapeHtml(txt)}</li>`;
+      const cls = attentionClassForText(txt);
+      return `<li class="${escapeHtml(cls)}">${escapeHtml(txt)}</li>`;
     })
     .join("");
 }
@@ -688,6 +790,19 @@ function readSawWeeklyPayload() {
   return { entries };
 }
 
+async function saveCheckWithOffline(payload) {
+  try {
+    await apiPost(payload);
+    return { queued: false };
+  } catch (err) {
+    if (isLikelyOfflineError(err)) {
+      await enqueueOfflineSave(payload, "Offline");
+      return { queued: true };
+    }
+    throw err;
+  }
+}
+
 /* ---------------- Save ---------------- */
 async function onSave() {
   const submitter = requireWho();
@@ -784,7 +899,7 @@ async function onSave() {
   const newIssueNote = ($("#newIssueNote")?.value || "").trim();
 
   setStatus("Saving…");
-  await apiPost({
+  const savePayload = {
     action: "saveCheck",
     stationId: st,
     apparatusId: ap,
@@ -793,19 +908,25 @@ async function onSave() {
     checkPayload,
     newIssueText,
     newIssueNote,
-  });
+  };
+  const { queued } = await saveCheckWithOffline(savePayload);
 
   if ($("#newIssue")) $("#newIssue").value = "";
   if ($("#newIssueNote")) $("#newIssueNote").value = "";
 
-  await refreshIssues();
-
-  if (type === "medicalDaily") {
-    await loadDrugMaster(ap);
-    renderForm();
+  if (!queued) {
+    await refreshIssues();
   }
 
-  setStatus("Saved ✅");
+  if (type === "medicalDaily") {
+    if (!queued) {
+      await loadDrugMaster(ap);
+      renderForm();
+    }
+  }
+
+  setStatus(queued ? "Saved offline (queued for sync)." : "Saved ✅");
+  updateSyncBadge();
 }
 
 /* ---------------- Events ---------------- */
@@ -841,6 +962,120 @@ async function onCheckTypeChange() {
   renderForm();
 }
 
+/* ---------------- Scanner ---------------- */
+let SCAN_STREAM = null;
+let SCAN_ACTIVE = false;
+let SCAN_DETECTOR = null;
+
+function setScanStatus(msg) {
+  const el = $("#scanStatus");
+  if (!el) return;
+  el.textContent = msg || "";
+}
+
+function normalizeScanValue(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function findApparatusFromScan(rawValue) {
+  const sel = $("#apparatus");
+  if (!sel) return null;
+  const cleaned = normalizeScanValue(rawValue);
+  const matches = cleaned.match(/[A-Z]-\d+/g);
+  const candidates = matches?.length ? matches : [cleaned];
+  const options = Array.from(sel.options || []);
+  for (const candidate of candidates) {
+    const option = options.find(
+      (opt) =>
+        normalizeScanValue(opt.value) === candidate ||
+        normalizeScanValue(opt.textContent || "") === candidate ||
+        normalizeScanValue(opt.textContent || "").includes(candidate)
+    );
+    if (option) return option.value;
+  }
+  return null;
+}
+
+async function startScanner() {
+  if (!("BarcodeDetector" in window)) {
+    setScanStatus("Barcode scanning not supported on this device.");
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setScanStatus("Camera access is not available.");
+    return;
+  }
+
+  const backdrop = $("#scanBackdrop");
+  const video = $("#scanVideo");
+  if (!backdrop || !video) return;
+
+  SCAN_DETECTOR =
+    SCAN_DETECTOR ||
+    new BarcodeDetector({ formats: ["qr_code", "code_128", "code_39", "codabar"] });
+  SCAN_ACTIVE = true;
+  backdrop.classList.add("show");
+  backdrop.setAttribute("aria-hidden", "false");
+  setScanStatus("Starting camera…");
+
+  try {
+    SCAN_STREAM = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false,
+    });
+    video.srcObject = SCAN_STREAM;
+    await video.play();
+    setScanStatus("Scanning…");
+    requestAnimationFrame(scanLoop);
+  } catch (err) {
+    setScanStatus(`Camera error: ${err?.message || err}`);
+    stopScanner();
+  }
+}
+
+function stopScanner() {
+  SCAN_ACTIVE = false;
+  const backdrop = $("#scanBackdrop");
+  const video = $("#scanVideo");
+  if (backdrop) {
+    backdrop.classList.remove("show");
+    backdrop.setAttribute("aria-hidden", "true");
+  }
+  if (video) {
+    video.pause();
+    video.srcObject = null;
+  }
+  if (SCAN_STREAM) {
+    SCAN_STREAM.getTracks().forEach((track) => track.stop());
+    SCAN_STREAM = null;
+  }
+  setScanStatus("");
+}
+
+async function scanLoop() {
+  if (!SCAN_ACTIVE || !SCAN_DETECTOR) return;
+  const video = $("#scanVideo");
+  if (!video) return;
+  try {
+    const barcodes = await SCAN_DETECTOR.detect(video);
+    if (barcodes?.length) {
+      const rawValue = barcodes[0].rawValue || barcodes[0].rawValueText || "";
+      const apparatusValue = findApparatusFromScan(rawValue);
+      if (apparatusValue) {
+        $("#apparatus").value = apparatusValue;
+        stopScanner();
+        await onApparatusChange();
+        setStatus(`Scanned apparatus ${apparatusValue}.`);
+        return;
+      }
+      setScanStatus(`Scanned ${rawValue}. No matching apparatus found.`);
+    }
+  } catch {
+    // Ignore frame errors
+  }
+  requestAnimationFrame(scanLoop);
+}
+
 /* ---------------- Boot ---------------- */
 async function boot() {
   setStatus("Loading…");
@@ -858,6 +1093,17 @@ async function boot() {
     savePrefs();
     onSave().catch((e) => setStatus(e.message, true));
   });
+  $("#scanBtn")?.addEventListener("click", () => startScanner());
+  $("#scanCloseBtn")?.addEventListener("click", () => stopScanner());
+  $("#scanBackdrop")?.addEventListener("click", (event) => {
+    if (event.target?.id === "scanBackdrop") stopScanner();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopScanner();
+  });
+
+  window.addEventListener("online", () => flushOfflineQueue());
+  window.addEventListener("offline", () => updateSyncBadge());
 
   loadPrefs();
   await loadConfig();
@@ -875,8 +1121,6 @@ async function boot() {
   if ($("#checkType")) $("#checkType").value = savedType;
 
   await onApparatusChange();
+  updateSyncBadge();
+  await flushOfflineQueue();
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  boot().catch((err) => setStatus(err.message, true));
-});
