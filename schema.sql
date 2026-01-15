@@ -57,3 +57,4 @@ CREATE TABLE IF NOT EXISTS drug_master (
   updated_ts TEXT NOT NULL,
   PRIMARY KEY (unit, drug_name)
 );
+
