@@ -142,6 +142,10 @@ function statusRowsFrom_(status) {
     status?.statusRows ||
     status?.apparatusRows ||
     status?.apparatus ||
+    status?.status?.rows ||
+    status?.status?.statusRows ||
+    status?.status?.apparatusRows ||
+    status?.status?.apparatus ||
     status?.items ||
     status?.data ||
     []
@@ -268,6 +272,7 @@ function renderIssueRow_(iss) {
   wrap.className = "issue";
 
   const issueId = issueIdFor_(iss);
+  const issueToken = issueId || `issue-${Math.random().toString(36).slice(2, 10)}`;
   const updatedAt = issueUpdatedAt_(iss);
   const updated = updatedAt ? new Date(updatedAt).toLocaleString() : "—";
   const computedStatus = computedIssueStatus_(iss);
@@ -291,11 +296,11 @@ function renderIssueRow_(iss) {
 
     <div class="right">
       <label class="toggle" title="Checked = Administration has seen it and is working it (green highlight)">
-        <input type="checkbox" data-ack="${escapeHtml(issueId)}" ${acknowledged ? "checked" : ""}>
+      <input type="checkbox" name="ack-${escapeHtml(issueToken)}" data-ack="${escapeHtml(issueId)}" ${acknowledged ? "checked" : ""}>
         ACK
       </label>
 
-      <select data-issue="${escapeHtml(issueId)}">
+      <select name="status-${escapeHtml(issueToken)}" data-issue="${escapeHtml(issueId)}">
         <option value="NEW" ${computedStatus === "NEW" ? "selected" : ""}>New</option>
         <option value="OLD" ${computedStatus === "OLD" ? "selected" : ""}>Old</option>
         <option value="RESOLVED">Resolved</option>
